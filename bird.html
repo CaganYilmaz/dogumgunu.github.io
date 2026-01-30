@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Flappy Bird - Mobile Fixed</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            margin: 0; 
+            padding: 0;
+            overflow: hidden; 
+            background: #000; 
+            font-family: sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            width: 100vw;
+            touch-action: manipulation; 
+        }
+        
+        /* VİDEO SABİTLEME (TAM EKRAN GARANTİLİ) */
+        #bg-video { 
+            position: fixed; 
+            top: 50%;
+            left: 50%;
+            min-width: 100%; 
+            min-height: 100%; 
+            width: auto;
+            height: auto;
+            z-index: -2; 
+            transform: translate(-50%, -50%); /* Videoyu merkeze kitler */
+            object-fit: cover; 
+            opacity: 0.5; 
+        }
+
+        .overlay { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0, 0, 0, 0.4); 
+            z-index: -1; 
+        }
+        
+        canvas { 
+            display: block;
+            max-width: 100vw;
+            max-height: 100vh;
+            border: 1px solid rgba(255, 255, 255, 0.2); 
+            background-color: transparent; 
+            z-index: 5; 
+        }
+
+        #ui { 
+            position: absolute; 
+            top: 5%; 
+            color: white; 
+            text-shadow: 2px 2px 5px #000; 
+            text-align: center; 
+            pointer-events: none; 
+            z-index: 10; 
+            width: 100%; 
+        }
+        h1 { font-size: 2.5rem; margin: 0; }
+        p { font-size: 1rem; opacity: 0.8; }
+    </style>
+</head>
+<body>
+
+    <video autoplay muted loop id="bg-video" playsinline webkit-playsinline>
+        <source src="foto/video.mp4" type="video/mp4">
+    </video>
+    
+    <div class="overlay"></div>
+
+    <div id="ui">
+        <h1 id="score">0</h1>
+        <p id="msg">Dokun veya Boşluk'a Bas</p>
+    </div>
+    
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreElement = document.getElementById("score");
+        const msgElement = document.getElementById("msg");
+        const video = document.getElementById("bg-video");
+
+        function resize() {
+            const ratio = 320 / 480;
+            let w = window.innerWidth;
+            let h = window.innerHeight;
+
+            if (w / h < ratio) {
+                canvas.width = w;
+                canvas.height = w / ratio;
+            } else {
+                canvas.height = h;
+                canvas.width = h * ratio;
+            }
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        const kusImg = new Image(); kusImg.src = "foto/kus.jpg";
+        const boruImg = new Image(); boruImg.src = "foto/boru.jpg";
+        const jumpSound = new Audio("foto/zipla.mp3");
+
+        let bird = { x: 50, y: 150, w: 38, h: 28, gravity: 0.30, lift: -6.5, velocity: 0 };
+        let pipes = [];
+        let frame = 0;
+        let score = 0;
+        let gameActive = true;
+        let gameSpeed = 3.2; 
+        const pipeWidth = 52;
+        const pipeGap = 150;
+
+        function createPipe() {
+            let minH = 50;
+            let maxH = canvas.height - pipeGap - minH;
+            let topH = Math.random() * (maxH - minH) + minH;
+            pipes.push({ x: canvas.width, top: topH, bottom: canvas.height - (topH + pipeGap) });
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(kusImg, bird.x, bird.y, bird.w, bird.h);
+
+            pipes.forEach(p => {
+                ctx.drawImage(boruImg, p.x, 0, pipeWidth, p.top);
+                ctx.drawImage(boruImg, p.x, canvas.height - p.bottom, pipeWidth, p.bottom);
+                if (gameActive) p.x -= gameSpeed;
+            });
+
+            if (pipes.length > 0 && pipes[0].x < -pipeWidth) {
+                pipes.shift();
+                score++;
+                scoreElement.innerText = score;
+                if(score % 5 === 0) gameSpeed += 0.2; 
+            }
+
+            if (gameActive) {
+                bird.velocity += bird.gravity;
+                bird.y += bird.velocity;
+                if (bird.y + bird.h > canvas.height || bird.y < 0) gameOver();
+                pipes.forEach(p => {
+                    if (bird.x < p.x + pipeWidth && bird.x + bird.w > p.x &&
+                        (bird.y < p.top || bird.y + bird.h > canvas.height - p.bottom)) {
+                        gameOver();
+                    }
+                });
+                if (frame % Math.floor(110 / (gameSpeed / 3)) === 0) createPipe();
+                frame++;
+                requestAnimationFrame(draw);
+            }
+        }
+
+        function jump() {
+            if (video.muted) { 
+                video.muted = false; 
+                video.play(); 
+                video.volume = 0.4; 
+            }
+            if (gameActive) {
+                bird.velocity = bird.lift;
+                jumpSound.currentTime = 0;
+                jumpSound.play().catch(() => {});
+            } else {
+                resetGame();
+            }
+        }
+
+        function gameOver() {
+            gameActive = false;
+            msgElement.innerHTML = "ÖLDÜN! <br> Skor: " + score + "<br> Tekrar için dokun.";
+        }
+
+        function resetGame() {
+            bird.y = 150; bird.velocity = 0; pipes = []; score = 0; frame = 0;
+            gameSpeed = 3.2; gameActive = true;
+            scoreElement.innerText = "0"; msgElement.innerText = "";
+            draw();
+        }
+
+        window.addEventListener("keydown", (e) => { if (e.code === "Space") jump(); });
+        canvas.addEventListener("touchstart", (e) => { e.preventDefault(); jump(); }, { passive: false });
+        canvas.addEventListener("mousedown", (e) => { e.preventDefault(); jump(); });
+
+        kusImg.onload = () => { boruImg.onload = () => { draw(); }; };
+        setTimeout(() => { if(frame === 0) draw(); }, 1000);
+    </script>
+</body>
+</html>

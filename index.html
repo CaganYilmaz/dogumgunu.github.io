@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estetik Video & Random Galeri</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+            background-color: #000;
+        }
+
+        /* Arka Plan Videosu */
+        #bg-video {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: -2;
+            transform: translate(-50%, -50%);
+            opacity: 0.5; /* Videoyu biraz daha arkada tutmak için */
+            object-fit: cover;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: -1;
+        }
+
+        .container {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Ana Buton */
+        .main-button {
+            padding: 18px 60px;
+            font-size: 22px;
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 15px;
+            cursor: pointer;
+            backdrop-filter: blur(15px);
+            transition: all 0.4s ease;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+        }
+
+        .main-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        /* Modal (Kutucuk) Tasarımı */
+        #modal {
+            display: none; /* Başlangıçta gizli */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 350px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            z-index: 10;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
+
+        #modal img {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .sub-button {
+            padding: 10px 25px;
+            background: #fff;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .sub-button:hover {
+            background: #ddd;
+            transform: translateY(-2px);
+        }
+
+        /* Kapatma butonu (X) */
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            color: white;
+            cursor: pointer;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <video autoplay muted loop id="bg-video">
+        <source src="foto/video.mp4" type="video/mp4">
+    </video>
+
+    <div class="overlay"></div>
+
+    <div class="container">
+        <button id="openBtn" class="main-button">Tıkla</button>
+    </div>
+
+    <div id="modal">
+        <span class="close-btn" id="closeBtn">&times;</span>
+        <img id="randomImg" src="" alt="Rastgele Resim">
+        <br>
+        <a href="bird.html" class="sub-button">Sayfaya Git</a>
+    </div>
+
+    <script>
+        const video = document.getElementById('bg-video');
+        const openBtn = document.getElementById('openBtn');
+        const closeBtn = document.getElementById('closeBtn');
+        const modal = document.getElementById('modal');
+        const randomImg = document.getElementById('randomImg');
+
+        // AYAR: Klasörde kaç tane resmin varsa buraya o sayıyı yaz
+        const maxFoto = 28; 
+
+        openBtn.addEventListener('click', function() {
+            // 1. Videonun sesini aç
+            video.muted = false;
+
+            // 2. Rastgele bir resim seç (1 ile maxFoto arası)
+            const randomNum = Math.floor(Math.random() * maxFoto) + 1;
+            // randomImg.src = `foto/${randomNum}.jpg`;
+	    randomImg.src = `foto/${randomNum}.jpg?v=${new Date().getTime()}`;
+
+            // 3. Kutucuğu göster
+            modal.style.display = 'block';
+        });
+
+        // Kutuyu kapatma fonksiyonu
+        closeBtn.addEventListener('click', function() {
+            modal.style.display = 'none';
+        });
+
+        // Ekranın boş bir yerine basınca da kapansın
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
